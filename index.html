@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Stream Controller (Free Version)</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #1a1a1a; color: white; }
+        .card { background: #2a2a2a; padding: 25px; border-radius: 12px; max-width: 500px; margin: auto; border: 1px solid #444; }
+        h2 { margin-top: 0; color: #aaa; font-size: 1.1rem; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        .section { margin-bottom: 20px; padding-bottom: 10px; }
+        label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: #888; font-weight: bold; }
+        
+        /* ボタン系 */
+        .grid-select { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .color-btn { width: 35px; height: 35px; border-radius: 6px; border: 2px solid #444; cursor: pointer; }
+        
+        /* 無効化（グレーアウト）スタイル */
+        .disabled { 
+            background: #333 !important; 
+            color: #555 !important; 
+            border: 1px dashed #444 !important; 
+            cursor: not-allowed !important; 
+            opacity: 0.6;
+        }
+
+        .font-btn { padding: 8px 12px; background: #444; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 0.8rem; }
+        .font-btn.active { background: #555; border: 1px solid #888; }
+
+        input[type="text"] { 
+            width: 100%; padding: 10px; background: #111; border: 1px solid #333; 
+            border-radius: 4px; color: white; box-sizing: border-box; margin-bottom: 5px;
+        }
+        
+        /* 広告エリア */
+        .ad-container {
+            margin-top: 5px;
+            padding: 10px;
+            background: #332b00;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .ad-link {
+            color: #ffeb3b;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .ad-link:hover { text-decoration: underline; }
+        
+        .char-count { font-size: 0.75rem; color: #888; text-align: right; display: block; }
+        .error { color: #ff5252; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>配信レイアウト設定 (無料版)</h2>
+        
+        <div class="section">
+            <label>メインカラー (3色のみ選択可)</label>
+            <div class="grid-select">
+                <div class="color-btn" style="background: #ffffff;" onclick="setColor('#ffffff')"></div>
+                <div class="color-btn" style="background: #40c4ff;" onclick="setColor('#40c4ff')"></div>
+                <div class="color-btn" style="background: #ff5252;" onclick="setColor('#ff5252')"></div>
+                <div class="color-btn disabled"></div>
+                <div class="color-btn disabled"></div>
+            </div>
+            <input type="hidden" id="colorMain" value="#ffffff">
+        </div>
+
+        <div class="section">
+            <label>フォント (2種類のみ選択可)</label>
+            <div class="grid-select">
+                <button class="font-btn" onclick="setFont('Noto Sans JP')">標準ゴシック</button>
+                <button class="font-btn" onclick="setFont('Sawarabi Mincho')">明朝体</button>
+                <button class="font-btn disabled">ドット絵風(Pro版)</button>
+                <button class="font-btn disabled">丸ゴシック(Pro版)</button>
+            </div>
+            <input type="hidden" id="selectedFont" value="Noto Sans JP">
+        </div>
+
+        <div class="section">
+            <label>SNSなどのID</label>
+            <input type="text" id="twitter" placeholder="@YourID">
+            
+            <label>ハッシュタグ</label>
+            <input type="text" id="hashtag" placeholder="#LiveStream">
+            
+            <label>テロップ内容 (最大20文字)</label>
+            <input type="text" id="ticker" maxlength="20" oninput="checkLength(this)" placeholder="テロップを入力">
+            <span class="char-count" id="countDisplay">0 / 20</span>
+
+            <div class="ad-container">
+                <a href="https://sakulabo142.booth.pm/items/8179445" target="_blank" class="ad-link">
+                    ✨ 有料版はこちら！(16進数・全カラー解放)
+                </a>
+                <p>https://sakulabo142.booth.pm/items/8179445</p>
+            </div>
+
+            <div style="margin-top: 20px; font-size: 0.7rem; color: #666; text-align: center;">
+                <a href="https://sakulab.netlify.app/license" target="_blank" style="color: #888; text-decoration: underline;">利用規約を読む</a>
+                <p>©2026 SAKULAB All Rights Reserved.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fields = ['colorMain', 'selectedFont', 'twitter', 'hashtag', 'ticker'];
+
+        function setColor(val) { document.getElementById('colorMain').value = val; save(); }
+        function setFont(val) { document.getElementById('selectedFont').value = val; save(); }
+        
+        function checkLength(el) {
+            const count = el.value.length;
+            const display = document.getElementById('countDisplay');
+            display.innerText = `${count} / 20`;
+            if (count >= 20) { display.classList.add('error'); } 
+            else { display.classList.remove('error'); }
+            save();
+        }
+
+        function save() {
+            const data = {};
+            fields.forEach(id => { data[id] = document.getElementById(id).value; });
+            localStorage.setItem('stream_lite_config', JSON.stringify(data));
+        }
+
+        fields.forEach(id => {
+            if(id !== 'ticker') document.getElementById(id).addEventListener('input', save);
+        });
+
+        window.onload = () => {
+            const saved = localStorage.getItem('stream_lite_config');
+            if (saved) {
+                const data = JSON.parse(saved);
+                Object.keys(data).forEach(key => { if (document.getElementById(key)) document.getElementById(key).value = data[key]; });
+                document.getElementById('countDisplay').innerText = `${document.getElementById('ticker').value.length} / 20`;
+            }
+        };
+    </script>
+</body>
+</html>
